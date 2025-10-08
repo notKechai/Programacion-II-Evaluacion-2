@@ -5,7 +5,12 @@ class Stock:
         self.lista_ingredientes = []
 
     def agregar_ingrediente(self, ingrediente):
-        pass
+        for ing in self.lista_ingredientes:
+            if ing.nombre.lower() == ingrediente.nombre.lower() and ing.unidad == ingrediente.unidad:
+                ing.cantidad += ingrediente.cantidad  
+                return
+    
+        self.lista_ingredientes.append(ingrediente)
 
     def eliminar_ingrediente(self, nombre_ingrediente):
         pass    
@@ -18,4 +23,6 @@ class Stock:
 
     def obtener_elementos_menu(self):
         pass
+
+
 
