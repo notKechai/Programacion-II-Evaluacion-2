@@ -36,6 +36,8 @@ class AplicacionConPestanas(ctk.CTk):
 
         self.crear_pestanas()
 
+    def actualizar_treeview(self):
+
         for item in self.tree.get_children():
             self.tree.delete(item)
 
@@ -83,7 +85,7 @@ class AplicacionConPestanas(ctk.CTk):
         self.df_csv = None   
         self.tabla_csv = None
 
-        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock", command= self.agregar_csv_al_stock)
+        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock")
         self.boton_agregar_stock.pack(side="bottom", pady=10)
  
     def agregar_csv_al_stock(self):
@@ -101,33 +103,11 @@ class AplicacionConPestanas(ctk.CTk):
             ingrediente = Ingrediente(nombre=nombre,unidad=unidad,cantidad=cantidad)
             self.stock.agregar_ingrediente(ingrediente)
         CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="info")
-        self.tabview.set("Stock")
         self.actualizar_treeview()   
 
     def cargar_csv(self):
-        ruta = filedialog.askopenfilename(
-            parent=self,
-            title='Selecciona archivo CSV',
-            filetypes=[('CSV', '*.csv'), ('Todos los archivos', "*.*")]
-        )
-
-        if not ruta:
-            return 
+        pass
         
-        try:
-            try:
-                df = pd.read_csv(ruta)
-            except UnicodeDecodeError:
-                df = pd.read_csv(ruta, encoding='latin-1')
-        except Exception as e:
-            CTkMessagebox(title='Error al leer el CSV',
-                          message=f'No se pudo leer el archivo.\n{e}',
-                          icon='warning')
-            return
-        
-        self.df_csv= df
-        self.mostrar_dataframe_en_tabla(df)
-
     def mostrar_dataframe_en_tabla(self, df):
         if self.tabla_csv:
             self.tabla_csv.destroy()
@@ -382,15 +362,7 @@ class AplicacionConPestanas(ctk.CTk):
         pass
 
     def actualizar_treeview(self):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        for ingrediente in self.stock.lista_ingredientes:
-            self.tree.insert("", "end", values=(
-                ingrediente.nombre,
-                ingrediente.unidad,
-                round(ingrediente.cantidad, 2)
-        ))
+        pass
 
 
 if __name__ == "__main__":
