@@ -232,6 +232,25 @@ class AplicacionConPestanas(ctk.CTk):
             facade = BoletaFacade(self.pedido)
             facade.generar_detalle_boleta()
             pdf_path = facade.crear_pdf() # retorna "boleta.pdf" absoluta sin se cambia a abs
+<<<<<<< Updated upstream
+=======
+
+            if self.pdf_viewer_boleta is not None:
+                try:
+                    self.pdf_viewer_boleta.pack_forget()
+                    self.pdf_viewer_boleta.destroy()
+                except Exception:
+                    pass
+                self.pdf_viewer_boleta = None
+
+            abs_pdf = os.path.abspath(pdf_path)
+            self.pdf_viewer_boleta = CTkPDFViewer(self.pdf_frame_boleta, file=abs_pdf)
+            self.pdf_viewer_boleta.pack(expand=True, fill="both")
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"No se pudo generar/mostrar la boleta.\n{e}", icon="warning")
+
+>>>>>>> Stashed changes
 
             if self.pdf_viewer_boleta is not None:
                 try:
