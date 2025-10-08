@@ -368,15 +368,47 @@ class AplicacionConPestanas(ctk.CTk):
             CTkMessagebox(title="Error de Validación", message="El nombre debe contener solo letras y espacios.", icon="warning")
             return False
 
-    def validar_cantidad(self, cantidad):
-        if cantidad.isdigit():
+    def validar_cantidad(self, cantidad, unidad):
+        try:
+            if unidad == "unid":
+                cantidad_num = int(cantidad)
+                if cantidad_num <= 0:
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número entero positivo.",icon="warning")
+                    return False
+            elif unidad == "kg":
+                cantidad_num = int(cantidad)
+                if cantidad_num <= 0:
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número entero positivo.",icon="warning")
+                    return False
             return True
-        else:
-            CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número entero positivo.", icon="warning")
+        except ValueError:
+            CTkMessagebox(title="Error de Validación",message="La cantidad debe ser un número entero positivo.",icon="warning")
             return False
 
     def ingresar_ingrediente(self):
-        pass
+        nombre = self.entry_nombre.get().strip()
+        unidad = self.combo_unidad.get().strip()
+        cantidad = self.entry_cantidad.get().strip()
+
+        if not nombre or not unidad or not cantidad:
+            CTkMessagebox(title="Error", message="Todos los campos son obligatorios.", icon="warning")
+            return
+
+        if not self.validar_nombre(nombre):
+            return
+
+        if not self.validar_cantidad(cantidad, unidad):
+            return
+
+        if unidad == "kg":
+            cantidad = float(cantidad)
+        else:
+            cantidad = int(cantidad)
+
+        nuevo_ingrediente = Ingrediente(nombre,unidad,cantidad)
+        self.stock.agregar_ingrediente(nuevo_ingrediente)
+        self.actualizar_treeview()
+        
 
     def eliminar_ingrediente(self):
         pass
