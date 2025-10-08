@@ -12,17 +12,21 @@ class Stock:
     
         self.lista_ingredientes.append(ingrediente)
 
-    def eliminar_ingrediente(self, nombre_ingrediente):
-        pass    
+    def eliminar_ingrediente(self, nombre_ingrediente: str):
+        self.lista_ingredientes = [i for i in self.lista_ingredientes if i.nombre.lower() != nombre_ingrediente.lower()]
 
     def verificar_stock(self):
-        pass
+        return {f'{i.nombre} ({i.unidad})': float(i.cantidad) for i in self.lista_ingredientes}
 
     def actualizar_stock(self, nombre_ingrediente, nueva_cantidad):
-        pass
+        for i in self.lista_ingredientes:
+            if i.nombre == nombre_ingrediente:
+                i.cantidad = float(nueva_cantidad)
+                return True
+        return False
 
     def obtener_elementos_menu(self):
-        pass
+        return self.lista_ingredientes[:]
 
 
 

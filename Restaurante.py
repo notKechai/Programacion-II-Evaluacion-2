@@ -85,7 +85,7 @@ class AplicacionConPestanas(ctk.CTk):
         self.df_csv = None   
         self.tabla_csv = None
 
-        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock")
+        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock", command=self.agregar_csv_al_stock)
         self.boton_agregar_stock.pack(side="bottom", pady=10)
  
     def agregar_csv_al_stock(self):
@@ -232,8 +232,6 @@ class AplicacionConPestanas(ctk.CTk):
             facade = BoletaFacade(self.pedido)
             facade.generar_detalle_boleta()
             pdf_path = facade.crear_pdf() # retorna "boleta.pdf" absoluta sin se cambia a abs
-<<<<<<< Updated upstream
-=======
 
             if self.pdf_viewer_boleta is not None:
                 try:
@@ -250,7 +248,6 @@ class AplicacionConPestanas(ctk.CTk):
         except Exception as e:
             CTkMessagebox(title="Error", message=f"No se pudo generar/mostrar la boleta.\n{e}", icon="warning")
 
->>>>>>> Stashed changes
 
             if self.pdf_viewer_boleta is not None:
                 try:
@@ -449,7 +446,7 @@ class AplicacionConPestanas(ctk.CTk):
         for item in self.tree.get_children():
             self.tree.delete(item)
         for ingrediente in self.stock.lista_ingredientes:
-            self.tree.inseert("", "end", values=(ingrediente.nombre, ingrediente.unidad, ingrediente.cantidad))
+            self.tree.insert("", "end", values=(ingrediente.nombre, ingrediente.unidad, ingrediente.cantidad))
 
 
 if __name__ == "__main__":
