@@ -198,7 +198,7 @@ class AplicacionConPestanas(ctk.CTk):
                 return
             
             self.pdf_viewer_carta = CTkPDFViewer(self.pdf_frame_carta, file=abs_pdf)
-            self.pdf_viewer_carta.pack(expand=True, fill="both ")
+            self.pdf_viewer_carta.pack(expand=True, fill="both")
 
             abs_pdf = os.path.abspath(pdf_path)
             self.pdf_viewer_carta = CTkPDFViewer(self.pdf_frame_carta, file=abs_pdf)
@@ -339,7 +339,44 @@ class AplicacionConPestanas(ctk.CTk):
 
     
     def generar_menus(self):
-        pass
+        try:
+            for widget in self.tab4.winfo_children():
+                widget.destroy()
+            
+            contenedor = ctk.CTkFrame(self.tab4)
+            contenedor.pack(expand=True, fill="both", padx=10, pady=10)
+
+            boton_menu = ctk.CTkButton(
+                contenedor,
+                text="Generar Carta (PDF)",
+                command=self.generar_y_mostrar_carta_pdf
+            )
+            boton_menu.pack(pady=10)
+
+            self.menus_creados.clear()
+
+            for menu in self.menus:
+                if menu.esta_disponible(self.stock):
+                    self.menus_creados.add(menu)
+                    self.crear_tarjeta(menu)
+                else:
+                    print(f"No hay stock suficiente para '{menu.nombre}'")
+
+            if not self.menus_creados:
+                CTkMessagebox(
+                    title="Sin Stock suficiente",
+                    message="No se pudo generar ningún menu porque falta stock",
+                    icon="warning"
+                )
+            else:
+                CTkMessagebox(
+                    title="Menús generados",
+                    message=f"Se generaron {len(self.menus_creados)} menús disponibles.",
+                    icon="info"
+                )
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f'Error al generar los menús.\n{e}', icon="warning")
 
     def eliminar_menu(self):
         pass
