@@ -101,7 +101,6 @@ class AplicacionConPestanas(ctk.CTk):
             ingrediente = Ingrediente(nombre=nombre,unidad=unidad,cantidad=cantidad)
             self.stock.agregar_ingrediente(ingrediente)
         CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="info")
-        self.tabview.set("Stock")
         self.actualizar_treeview()   
 
     def cargar_csv(self):
@@ -112,7 +111,7 @@ class AplicacionConPestanas(ctk.CTk):
         )
 
         if not ruta:
-            return 
+            return #el usuario canceló la selección
         
         try:
             try:
@@ -125,7 +124,7 @@ class AplicacionConPestanas(ctk.CTk):
                           icon='warning')
             return
         
-        self.df_csv= df
+        self.df_csv = df
         self.mostrar_dataframe_en_tabla(df)
 
     def mostrar_dataframe_en_tabla(self, df):
@@ -165,14 +164,23 @@ class AplicacionConPestanas(ctk.CTk):
         self.pdf_frame_carta.pack(expand=True, fill="both", padx=10, pady=10)
 
         self.pdf_viewer_carta = None
+
     def generar_y_mostrar_carta_pdf(self):
         try:
+            if not self.menus:
+                CTkMessagebox(title="Sin datos", message="No hay mnús para generar la carta.", icon="warning")
+                return
+            
             pdf_path = "carta.pdf"
-            create_menu_pdf(self.menus, pdf_path,
+            abs_pdf = create_menu_pdf(
+                menus = self.menus,
+                pdf_path = pdf_path,
                 titulo_negocio="Restaurante",
                 subtitulo="Carta Primavera 2025",
                 moneda="$")
             
+            #Limpiando el visor previo
+
             if self.pdf_viewer_carta is not None:
                 try:
                     self.pdf_viewer_carta.pack_forget()
@@ -180,6 +188,15 @@ class AplicacionConPestanas(ctk.CTk):
                 except Exception:
                     pass
                 self.pdf_viewer_carta = None
+            
+            #Monatando el visor
+
+            if not os.path.exists(abs_pdf):
+                CTkMessagebox(title="Error", message="No se encontró el PDF generado.", icon="warning")
+                return
+            
+            self.pdf_viewer_carta = CTkPDFViewer(self.pdf_frame_carta, file=abs_pdf)
+            self.pdf_viewer_carta.pack(expand=True, fill="both ")
 
             abs_pdf = os.path.abspath(pdf_path)
             self.pdf_viewer_carta = CTkPDFViewer(self.pdf_frame_carta, file=abs_pdf)
@@ -204,10 +221,32 @@ class AplicacionConPestanas(ctk.CTk):
     
         self.pdf_viewer_boleta = None
         
-
+    # SE LE IMPLEMENTA BOLETAFACDE
     def mostrar_boleta(self):
-        pass
+        try:
+            if not self.pedido.menus:
+                CTkMessagebox("Sin datos", message="No hay items en el pedido.", icon="warning")
+                return
+            facade = BoletaFacade(self.pedido)
+            facade.generar_detalle_boleta()
+            pdf_path = facade.crear_pdf() # retorna "boleta.pdf" absoluta sin se cambia a abs
 
+            if self.pdf_viewer_boleta is not None:
+                try:
+                    self.pdf_viewer_boleta.pack_forget()
+                    self.pdf_viewer_boleta.destroy()
+                except Exception:
+                    pass
+                self.pdf_viewer_boleta = None
+
+            abs_pdf = os.path.abspath(pdf_path)
+            self.pdf_viewer_boleta = CTkPDFViewer(self.pdf_frame_boleta, file=abs_pdf)
+            self.pdf_viewer_boleta.pack(expand=True, fill="both")
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"No se pudo generar/mostrar la boleta.\n{e}", icon="warning")
+
+            
     def configurar_pestana1(self):
         # Dividir la Pestaña 1 en dos frames
         frame_formulario = ctk.CTkFrame(self.tab1)
@@ -381,16 +420,15 @@ class AplicacionConPestanas(ctk.CTk):
     def eliminar_ingrediente(self):
         pass
 
+        #Modificado el acrualizar_treeview
+
     def actualizar_treeview(self):
+        if not hasattr(self, "tree"):
+            return
         for item in self.tree.get_children():
             self.tree.delete(item)
-
         for ingrediente in self.stock.lista_ingredientes:
-            self.tree.insert("", "end", values=(
-                ingrediente.nombre,
-                ingrediente.unidad,
-                round(ingrediente.cantidad, 2)
-        ))
+            self.tree.inseert("", "end", values=(ingrediente.nombre, ingrediente.unidad, ingrediente.cantidad))
 
 
 if __name__ == "__main__":
