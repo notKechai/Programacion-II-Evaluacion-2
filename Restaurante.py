@@ -36,6 +36,8 @@ class AplicacionConPestanas(ctk.CTk):
 
         self.crear_pestanas()
 
+    def actualizar_treeview(self):
+
         for item in self.tree.get_children():
             self.tree.delete(item)
 
@@ -83,7 +85,7 @@ class AplicacionConPestanas(ctk.CTk):
         self.df_csv = None   
         self.tabla_csv = None
 
-        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock", command= self.agregar_csv_al_stock)
+        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock")
         self.boton_agregar_stock.pack(side="bottom", pady=10)
  
     def agregar_csv_al_stock(self):
