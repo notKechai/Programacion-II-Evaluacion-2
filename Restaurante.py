@@ -25,7 +25,7 @@ class AplicacionConPestanas(ctk.CTk):
         nametofont("TkDefaultFont").configure(size=11)
 
         self.stock = Stock()
-        self.menus_creados = set()
+        self.menus_creados = []
 
         self.pedido = Pedido()
 
@@ -169,6 +169,7 @@ class AplicacionConPestanas(ctk.CTk):
 
     def generar_y_mostrar_carta_pdf(self):
         try:
+            menus_para_pdf = list(self.menus_creados) if getattr(self, "menus_creados", None) else self.menus
             if not self.menus:
                 CTkMessagebox(title="Sin datos", message="No hay mnús para generar la carta.", icon="warning")
                 return
@@ -197,10 +198,6 @@ class AplicacionConPestanas(ctk.CTk):
                 CTkMessagebox(title="Error", message="No se encontró el PDF generado.", icon="warning")
                 return
             
-            self.pdf_viewer_carta = CTkPDFViewer(self.pdf_frame_carta, file=abs_pdf)
-            self.pdf_viewer_carta.pack(expand=True, fill="both")
-
-            abs_pdf = os.path.abspath(pdf_path)
             self.pdf_viewer_carta = CTkPDFViewer(self.pdf_frame_carta, file=abs_pdf)
             self.pdf_viewer_carta.pack(expand=True, fill="both")
 
@@ -342,47 +339,81 @@ class AplicacionConPestanas(ctk.CTk):
         try:
             for widget in self.tab4.winfo_children():
                 widget.destroy()
-            
+
             contenedor = ctk.CTkFrame(self.tab4)
             contenedor.pack(expand=True, fill="both", padx=10, pady=10)
 
             boton_menu = ctk.CTkButton(
-                contenedor,
-                text="Generar Carta (PDF)",
-                command=self.generar_y_mostrar_carta_pdf
+            contenedor,
+            text="Generar Carta (PDF)",
+            command=self.generar_y_mostrar_carta_pdf
             )
             boton_menu.pack(pady=10)
 
+        # usar lista
             self.menus_creados.clear()
 
             for menu in self.menus:
                 if menu.esta_disponible(self.stock):
-                    self.menus_creados.add(menu)
-                    self.crear_tarjeta(menu)
-                else:
-                    print(f"No hay stock suficiente para '{menu.nombre}'")
+                # evitar duplicados por nombre
+                    if not any(m.nombre == menu.nombre for m in self.menus_creados):
+                        self.menus_creados.append(menu)
+                        self.crear_tarjeta(menu)
+            else:
+                print(f"No hay stock suficiente para '{menu.nombre}'")
 
             if not self.menus_creados:
                 CTkMessagebox(
-                    title="Sin Stock suficiente",
-                    message="No se pudo generar ningún menu porque falta stock",
-                    icon="warning"
+                title="Sin Stock suficiente",
+                message="No se pudo generar ningún menu porque falta stock",
+                icon="warning"
                 )
             else:
                 CTkMessagebox(
-                    title="Menús generados",
-                    message=f"Se generaron {len(self.menus_creados)} menús disponibles.",
-                    icon="info"
-                )
+                title="Menús generados",
+                message=f"Se generaron {len(self.menus_creados)} menús disponibles.",
+                icon="info"
+            )
 
         except Exception as e:
             CTkMessagebox(title="Error", message=f'Error al generar los menús.\n{e}', icon="warning")
 
-    def eliminar_menu(self):
-        pass
 
+    def eliminar_menu(self):
+        sel = self.treeview_menu.selection()
+        if not sel:
+            CTkMessagebox(title="Nada Seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
+            return
+        
+        item_id = sel[0]
+        valores = self.treeview_menu.item(item_id, "values")
+        if not valores:
+            return
+        
+        nombre = valores[0]
+        eliminado = self.pedido.eliminar_menu(nombre , cantidad=1)
+        if not eliminado:
+            CTkMessagebox(title="No encontrado", message="No se pudo eliminar menús seleccionado.", icon="warning")
+            return
+        
+        self.actualizar_treeview_pedido()
+        total = self.pedido.calcular_total()
+        self.label_total.configure(text=f'Total: ${total:,.0f}'.replace(",", "."))
+    
     def generar_boleta(self):
-        pass
+        if not self.pedido.menus:
+            CTkMessagebox(title="Sin items", message="El pedido está vacío.", icon="warning")
+            return
+        
+        try:
+            facade = BoletaFacade(self.pedido)
+            msg = facade.generar_boleta()
+
+            self.tabview.set("Boleta")
+            self.mostrar_boleta()
+            CTkMessagebox(title="Boleta", message=msg, icon="info")
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f'No se pudo generar la boleta.\n{e}', icon="warning")
 
     def configurar_pestana2(self):
         frame_superior = ctk.CTkFrame(self.tab2)
