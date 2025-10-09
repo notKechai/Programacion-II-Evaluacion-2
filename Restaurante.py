@@ -170,19 +170,26 @@ class AplicacionConPestanas(ctk.CTk):
 
     def generar_y_mostrar_carta_pdf(self):
         try:
-            menus_para_pdf = list(self.menus_creados) if getattr(self, "menus_creados", None) else self.menus
-            if not self.menus:
-                CTkMessagebox(title="Sin datos", message="No hay mnús para generar la carta.", icon="warning")
+            menus_para_pdf = [m for m in self.menus if m.esta_disponible(self.stock)]
+            
+            if not menus_para_pdf:
+                CTkMessagebox(
+                    title="Sin datos",
+                    message="No hay menús dusponibles con el stock actual para generar la carta",
+                    icon="warning"
+                )
                 return
             
             pdf_path = "carta.pdf"
             abs_pdf = create_menu_pdf(
-                menus = self.menus,
-                pdf_path = pdf_path,
+                menus=menus_para_pdf,
+                pdf_path=pdf_path,
                 titulo_negocio="Restaurante",
-                subtitulo="Carta Primavera 2025",
-                moneda="$")
+                subtitulo="Carta (según el stock actual)",
+                moneda="$",
+            )
             
+        
             #Limpiando el visor previo
 
             if self.pdf_viewer_carta is not None:
@@ -341,15 +348,17 @@ class AplicacionConPestanas(ctk.CTk):
             for widget in self.tab4.winfo_children():
                 widget.destroy()
 
-            contenedor = ctk.CTkFrame(self.tab4)
-            contenedor.pack(expand=True, fill="both", padx=10, pady=10)
-
+        # Recrea botón y frame de PDF (y resetea el viewer)
             boton_menu = ctk.CTkButton(
-            contenedor,
-            text="Generar Carta (PDF)",
-            command=self.generar_y_mostrar_carta_pdf
+            self.tab4, text="Generar Carta (PDF)", command=self.generar_y_mostrar_carta_pdf
             )
             boton_menu.pack(pady=10)
+
+            self.pdf_viewer_carta = None
+            self.pdf_frame_carta = ctk.CTkFrame(self.tab4)
+            self.pdf_frame_carta.pack(expand=True, fill="both", padx=10, pady=10)
+
+
 
         # usar lista
             self.menus_creados.clear()
