@@ -5,7 +5,7 @@ Carne,kg,12
 Lamina de queso,unid,8
 Vienesa,unid,25
 Papas,kg,15
-Churrasco de carne,unid,11
+Hamburguesa de carne,unid,11
 Coca cola,unid,18
 Tomate,kg,7
 Cebolla,kg,5
@@ -16,3 +16,10 @@ Palta,kg,100
 Pepsi,unid,100
 Carne de vacuno,kg,10
 Masa de empanada,unid,40
+Presa de pollo,unid,10
+Porcion de harina,unid,20
+Porcion de aceite,unid,20
+Zanahoria rallada,kg,5
+Manjar,kg,1
+Azucar,kg,1
+Lechuga,unid,4
