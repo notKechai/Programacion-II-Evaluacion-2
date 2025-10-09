@@ -85,7 +85,7 @@ class AplicacionConPestanas(ctk.CTk):
         self.df_csv = None   
         self.tabla_csv = None
 
-        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock", command=self.agregar_csv_al_stock)
+        self.boton_agregar_stock = ctk.CTkButton(self.frame_tabla_csv, text="Agregar al Stock",fg_color="#1976D2", text_color="white", command=self.agregar_csv_al_stock)
         self.boton_agregar_stock.pack(side="bottom", pady=10)
  
     def agregar_csv_al_stock(self):
@@ -103,6 +103,7 @@ class AplicacionConPestanas(ctk.CTk):
             ingrediente = Ingrediente(nombre=nombre,unidad=unidad,cantidad=cantidad)
             self.stock.agregar_ingrediente(ingrediente)
         CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="info")
+        self.tabview.set("Stock")
         self.actualizar_treeview()   
 
     def cargar_csv(self):
@@ -467,12 +468,12 @@ class AplicacionConPestanas(ctk.CTk):
             if unidad == "unid":
                 cantidad_num = int(cantidad)
                 if cantidad_num <= 0:
-                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número entero positivo.",icon="warning")
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
                     return False
             elif unidad == "kg":
-                cantidad_num = int(cantidad)
+                cantidad_num = float(cantidad)
                 if cantidad_num <= 0:
-                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número entero positivo.",icon="warning")
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
                     return False
             return True
         except ValueError:
@@ -496,7 +497,7 @@ class AplicacionConPestanas(ctk.CTk):
 
         if unidad == "kg":
             cantidad = float(cantidad)
-        else:
+        elif unidad == "unid":
             cantidad = int(cantidad)
 
         nuevo_ingrediente = Ingrediente(nombre,unidad,cantidad)
