@@ -464,21 +464,17 @@ class AplicacionConPestanas(ctk.CTk):
             return False
 
     def validar_cantidad(self, cantidad, unidad):
-        try:
-            if unidad == "unid":
-                cantidad_num = int(cantidad)
-                if cantidad_num <= 0:
-                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
-                    return False
-            elif unidad == "kg":
-                cantidad_num = float(cantidad)
-                if cantidad_num <= 0:
-                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
-                    return False
-            return True
-        except ValueError:
-            CTkMessagebox(title="Error de Validación",message="La cantidad debe ser un número entero positivo.",icon="warning")
-            return False
+        if unidad == "unid":
+            cantidad_num = int(cantidad)
+            if cantidad_num <= 0:
+                CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
+                return False
+        elif unidad == "kg":
+            cantidad_num = float(cantidad)
+            if cantidad_num <= 0:
+                CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
+                return False
+        return True
 
     def ingresar_ingrediente(self):
         nombre = self.entry_nombre.get().strip()
@@ -506,9 +502,20 @@ class AplicacionConPestanas(ctk.CTk):
         
 
     def eliminar_ingrediente(self):
-        pass
+        seleccion = self.tree.selection()
+        if not seleccion:
+                CTkMessagebox(title="Error", message="Selecciona un ingrediente para eliminar.", icon="warning")
+                return
+        item_id = seleccion[0]
+        valores = self.tree.item(item_id, "values")
+        nombre_ingrediente = valores[0]
+        self.stock.eliminar_ingrediente(nombre_ingrediente)
 
-        #Modificado el acrualizar_treeview
+        self.actualizar_treeview()
+
+        CTkMessagebox(title="Ingrediente eliminado", message=f"'{nombre_ingrediente}' fue eliminado del stock.", icon="info")
+
+        
 
     def actualizar_treeview(self):
         if not hasattr(self, "tree"):
