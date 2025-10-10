@@ -8,7 +8,7 @@ class Stock:
     def agregar_ingrediente(self, ingrediente):
         for ing in self.lista_ingredientes:
             if ing.nombre.lower() == ingrediente.nombre.lower() and ing.unidad == ingrediente.unidad:
-                ing.cantidad += ingrediente.cantidad 
+                ing.cantidad = float(ing.cantidad) + float(ingrediente.cantidad) 
                 return
             elif ing.nombre.lower() == ingrediente.nombre.lower() and ing.unidad != ingrediente.unidad:
                 CTkMessagebox(title="Error de unidad", message=f"La unidad de {ing.nombre.lower()} es {ing.unidad.lower()}, no {ingrediente.unidad.lower()}", icon="warning")

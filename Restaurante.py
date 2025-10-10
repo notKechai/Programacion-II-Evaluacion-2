@@ -311,6 +311,7 @@ class AplicacionConPestanas(ctk.CTk):
 
         self.boton_generar_menu = ctk.CTkButton(frame_treeview, text="Generar Menú", command=self.generar_menus)
         self.boton_generar_menu.pack(pady=10)
+
     def tarjeta_click(self, event, menu):
         suficiente_stock = True
         if self.stock.lista_ingredientes==[]:
@@ -318,7 +319,7 @@ class AplicacionConPestanas(ctk.CTk):
         for ingrediente_necesario in menu.ingredientes:
             for ingrediente_stock in self.stock.lista_ingredientes:
                 if ingrediente_necesario.nombre == ingrediente_stock.nombre:
-                    if int(ingrediente_stock.cantidad) < int(ingrediente_necesario.cantidad):
+                    if float(ingrediente_stock.cantidad) < float(ingrediente_necesario.cantidad):
                         suficiente_stock = False
                         break
             if not suficiente_stock:
@@ -328,7 +329,7 @@ class AplicacionConPestanas(ctk.CTk):
             for ingrediente_necesario in menu.ingredientes:
                 for ingrediente_stock in self.stock.lista_ingredientes:
                     if ingrediente_necesario.nombre == ingrediente_stock.nombre:
-                        ingrediente_stock.cantidad = str(int(ingrediente_stock.cantidad) - int(ingrediente_necesario.cantidad))
+                        ingrediente_stock.cantidad = str(float(ingrediente_stock.cantidad) - float(ingrediente_necesario.cantidad))
             
             self.pedido.agregar_menu(menu)
             self.actualizar_treeview_pedido()
@@ -365,7 +366,6 @@ class AplicacionConPestanas(ctk.CTk):
 
             for menu in self.menus:
                 if menu.esta_disponible(self.stock):
-                # evitar duplicados por nombre
                     if not any(m.nombre == menu.nombre for m in self.menus_creados):
                         self.menus_creados.append(menu)
                         self.crear_tarjeta(menu)
@@ -401,11 +401,28 @@ class AplicacionConPestanas(ctk.CTk):
             return
         
         nombre = valores[0]
-        eliminado = self.pedido.eliminar_menu(nombre , cantidad=1)
+        menu_completo = None
+        for menu in self.menus:  
+            if menu.nombre == nombre:
+                menu_completo = menu
+                break
+
+        eliminado = self.pedido.eliminar_menu(nombre, cantidad=1)
         if not eliminado:
             CTkMessagebox(title="No encontrado", message="No se pudo eliminar menús seleccionado.", icon="warning")
             return
         
+        for ret in menu_completo.ingredientes:
+            find = False
+            for urn in self.stock.lista_ingredientes:
+                if ret.nombre == urn.nombre :
+                    urn.cantidad = str(float(urn.cantidad) + float(ret.cantidad))
+                    find = True
+                    break
+                
+            if not find:
+                self.stock.agregar_ingrediente(ret)    
+        self.actualizar_treeview()
         self.actualizar_treeview_pedido()
         total = self.pedido.calcular_total()
         self.label_total.configure(text=f'Total: ${total:,.0f}'.replace(",", "."))
@@ -422,6 +439,9 @@ class AplicacionConPestanas(ctk.CTk):
             self.tabview.set("Boleta")
             self.mostrar_boleta()
             CTkMessagebox(title="Boleta", message=msg, icon="info")
+            
+            for item in self.tree.get_children():
+                self.tree.delete(item)
         except Exception as e:
             CTkMessagebox(title="Error", message=f'No se pudo generar la boleta.\n{e}', icon="warning")
 

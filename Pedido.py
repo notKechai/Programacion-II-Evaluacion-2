@@ -27,6 +27,7 @@ class Pedido:
                     self.menus.remove(m)
                 return True
         return False
+    
 
     def mostrar_pedido(self):
         return [(m.nombre, m.cantidad, m.precio, m.cantidad * m.precio) for m in self.menus]
