@@ -74,9 +74,9 @@ class AplicacionConPestanas(ctk.CTk):
         self._configurar_pestana_ver_boleta()
 
     def configurar_pestana3(self):
-        label = ctk.CTkLabel(self.tab3, text="Carga de archivo CSV")
+        label = ctk.CTkLabel(self.tab3, text="Carga de archivo CSV o Excel")
         label.pack(pady=20)
-        boton_cargar_csv = ctk.CTkButton(self.tab3, text="Cargar CSV", fg_color="#1976D2", text_color="white",command=self.cargar_csv)
+        boton_cargar_csv = ctk.CTkButton(self.tab3, text="Cargar CSV o Excel", fg_color="#1976D2", text_color="white",command=self.cargar_csv)
 
         boton_cargar_csv.pack(pady=10)
 
@@ -90,39 +90,92 @@ class AplicacionConPestanas(ctk.CTk):
  
     def agregar_csv_al_stock(self):
         if self.df_csv is None:
-            CTkMessagebox(title="Error", message="Primero debes cargar un archivo CSV.", icon="warning")
+            CTkMessagebox(title="Error", message="Primero debes cargar un archivo.", icon="warning")
             return
 
-        if 'nombre' not in self.df_csv.columns or 'cantidad' not in self.df_csv.columns:
-            CTkMessagebox(title="Error", message="El CSV debe tener columnas 'nombre' y 'cantidad'.", icon="warning")
-            return
-        for _, row in self.df_csv.iterrows():
-            nombre = str(row['nombre'])
-            cantidad = str(row['cantidad'])
-            unidad = str(row['unidad'])
-            ingrediente = Ingrediente(nombre=nombre,unidad=unidad,cantidad=cantidad)
-            self.stock.agregar_ingrediente(ingrediente)
-        CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="info")
-        self.tabview.set("Stock")
-        self.actualizar_treeview()   
+        try:
+        # Asegurar normalización de columnas sin helpers
+            df = self.df_csv.rename(columns={c: c.strip().lower() for c in self.df_csv.columns})
+
+        # Validar columnas requeridas
+            if not all(c in df.columns for c in ("nombre", "unidad", "cantidad")):
+                CTkMessagebox(title="Error", message="El archivo debe tener columnas 'nombre', 'unidad' y 'cantidad'.", icon="warning")
+                return
+
+            for _, row in df.iterrows():
+                nombre = str(row['nombre']).strip()
+                unidad = str(row['unidad']).strip()
+                cantidad = row['cantidad']
+
+            # Validar unidad
+                if unidad not in ("kg", "unid"):
+                    CTkMessagebox(title="Unidad inválida",
+                                message=f"Unidad no soportada para '{nombre}': {unidad}",
+                                icon="warning")
+                    continue
+
+            # Convertir cantidad a número
+                try:
+                    cantidad = float(cantidad)
+                except:
+                    CTkMessagebox(title="Dato inválido",
+                                message=f"Cantidad inválida para '{nombre}': {cantidad}",
+                                icon="warning")
+                    continue
+
+                if unidad == "unid":
+                    cantidad = int(cantidad)
+
+                ingrediente = Ingrediente(nombre=nombre, unidad=unidad, cantidad=cantidad)
+                self.stock.agregar_ingrediente(ingrediente)
+
+            CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="info")
+            self.tabview.set("Stock")
+            self.actualizar_treeview()
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"No se pudo agregar al stock.\n{e}", icon="warning")
+
 
     def cargar_csv(self):
         ruta = filedialog.askopenfilename(
             parent=self,
-            title='Selecciona archivo CSV',
-            filetypes=[('CSV', '*.csv'), ('Todos los archivos', "*.*")]
+            title='Selecciona archivo CSV o Excel',
+            filetypes=[('CSV', '*.csv'), 
+                       ("Excel", ('*.xlsx', '*.xls')), 
+                       ('Todos los archivos', "*")
+            ]
         )
 
         if not ruta:
             return #el usuario canceló la selección
         
         try:
-            try:
-                df = pd.read_csv(ruta)
-            except UnicodeDecodeError:
-                df = pd.read_csv(ruta, encoding='latin-1')
+            ext = os.path.splitext(ruta)[1].lower()
+            if ext == ".csv":
+                try:
+                    df = pd.read_csv(ruta)
+                except UnicodeDecodeError:
+                    df = pd.read_csv(ruta, encoding='latin-1')
+            elif ext in ('.xlsx', '.xls'):
+                df = pd.read_excel(ruta)
+            else:
+                CTkMessagebox(title="Formato no soportado",
+                              message="Usa CSV, XLSX o XLS.",
+                              icon="warning")
+                return
+            
+            df = df.rename(columns={c: c.strip().lower() for c in df.columns})
+
+            requeridas = ('nombre', 'unidad', 'cantidad')
+            faltan = [c for c in requeridas if c not in df.columns]
+            if faltan:
+                CTkMessagebox(title='Columnas Faltantes',
+                              message=f"El archivo debe incluir las columnas: 'nombre', 'unidad', 'cantidad'. Faltan: {', '.join(faltan)}",
+                              icon="warning")
+                return
         except Exception as e:
-            CTkMessagebox(title='Error al leer el CSV',
+            CTkMessagebox(title='Error al leer el archivo',
                           message=f'No se pudo leer el archivo.\n{e}',
                           icon='warning')
             return
@@ -231,12 +284,12 @@ class AplicacionConPestanas(ctk.CTk):
     # SE LE IMPLEMENTA BOLETAFACDE
     def mostrar_boleta(self):
         try:
-            if not self.pedido.menus:
-                CTkMessagebox("Sin datos", message="No hay items en el pedido.", icon="warning")
+            pdf_path = os.path.abspath("boleta.pdf")
+            if not os.path.exists(pdf_path):
+                CTkMessagebox(title="Sin boleta",
+                            message="Aún no hay una boleta generada. Primero genera una desde la pestaña 'Pedido'.",
+                            icon="warning")
                 return
-            facade = BoletaFacade(self.pedido)
-            facade.generar_detalle_boleta()
-            pdf_path = facade.crear_pdf() # retorna "boleta.pdf" absoluta sin se cambia a abs
 
             if self.pdf_viewer_boleta is not None:
                 try:
@@ -246,13 +299,11 @@ class AplicacionConPestanas(ctk.CTk):
                     pass
                 self.pdf_viewer_boleta = None
 
-            abs_pdf = os.path.abspath(pdf_path)
-            self.pdf_viewer_boleta = CTkPDFViewer(self.pdf_frame_boleta, file=abs_pdf)
+            self.pdf_viewer_boleta = CTkPDFViewer(self.pdf_frame_boleta, file=pdf_path)
             self.pdf_viewer_boleta.pack(expand=True, fill="both")
 
         except Exception as e:
-            CTkMessagebox(title="Error", message=f"No se pudo generar/mostrar la boleta.\n{e}", icon="warning")
-
+            CTkMessagebox(title="Error", message=f"No se pudo mostrar la boleta.\n{e}", icon="warning")
 
             if self.pdf_viewer_boleta is not None:
                 try:
@@ -434,12 +485,15 @@ class AplicacionConPestanas(ctk.CTk):
         
         try:
             facade = BoletaFacade(self.pedido)
-            msg = facade.generar_boleta()
+            facade.generar_boleta()
 
-            self.tabview.set("Boleta")
-            self.mostrar_boleta()
-            CTkMessagebox(title="Boleta", message=msg, icon="info")
+            self.pedido = Pedido()
+            self.actualizar_treeview_pedido()
+            self.label_total.configure(text="Total: $0.00")
             
+            CTkMessagebox(title="Boleta Generada", message="Boleta generada correctamente.\nVe a la pestaña 'Boleta' y pulsa 'Mostrar Boleta' para visualizarla.",
+            icon="info")
+
             for item in self.tree.get_children():
                 self.tree.delete(item)
         except Exception as e:
