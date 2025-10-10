@@ -41,7 +41,6 @@ class AplicacionConPestanas(ctk.CTk):
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-
         for ingrediente in self.stock.lista_ingredientes:
             self.tree.insert("", "end", values=(ingrediente.nombre,ingrediente.unidad, ingrediente.cantidad))    
 
@@ -93,8 +92,8 @@ class AplicacionConPestanas(ctk.CTk):
             CTkMessagebox(title="Error", message="Primero debes cargar un archivo CSV.", icon="warning")
             return
 
-        if 'nombre' not in self.df_csv.columns or 'cantidad' not in self.df_csv.columns:
-            CTkMessagebox(title="Error", message="El CSV debe tener columnas 'nombre' y 'cantidad'.", icon="warning")
+        if 'nombre' not in self.df_csv.columns or 'unidad' not in self.df_csv.columns or 'cantidad' not in self.df_csv.columns:
+            CTkMessagebox(title="Error", message="El CSV debe tener columnas 'nombre', 'nombre' y 'cantidad'.", icon="warning")
             return
         for _, row in self.df_csv.iterrows():
             nombre = str(row['nombre'])
@@ -102,7 +101,7 @@ class AplicacionConPestanas(ctk.CTk):
             unidad = str(row['unidad'])
             ingrediente = Ingrediente(nombre=nombre,unidad=unidad,cantidad=cantidad)
             self.stock.agregar_ingrediente(ingrediente)
-        CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="info")
+        CTkMessagebox(title="Stock Actualizado", message="Ingredientes agregados al stock correctamente.", icon="check")
         self.tabview.set("Stock")
         self.actualizar_treeview()   
 
@@ -524,17 +523,20 @@ class AplicacionConPestanas(ctk.CTk):
             return False
 
     def validar_cantidad(self, cantidad, unidad):
-        if unidad == "unid":
-            cantidad_num = int(cantidad)
-            if cantidad_num <= 0:
-                CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
-                return False
-        elif unidad == "kg":
-            cantidad_num = float(cantidad)
-            if cantidad_num <= 0:
-                CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
-                return False
-        return True
+        try:
+            if unidad == "unid":
+                cantidad_num = int(cantidad)
+                if cantidad_num <= 0:
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
+                    return False
+            elif unidad == "kg":
+                cantidad_num = float(cantidad)
+                if cantidad_num <= 0:
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
+                    return False
+            return True
+        except ValueError:
+            CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
 
     def ingresar_ingrediente(self):
         nombre = self.entry_nombre.get().strip()
@@ -559,6 +561,7 @@ class AplicacionConPestanas(ctk.CTk):
         nuevo_ingrediente = Ingrediente(nombre,unidad,cantidad)
         self.stock.agregar_ingrediente(nuevo_ingrediente)
         self.actualizar_treeview()
+        CTkMessagebox(title="Éxito!", message="El ingrediente se a añadido correctamente.", icon="check")
         
 
     def eliminar_ingrediente(self):
