@@ -11,8 +11,8 @@ def get_default_menus() -> List[IMenu]:
             [
                 Ingrediente("Vienesa", "unid", 1),
                 Ingrediente("Pan de completo", "unid", 1),
-                Ingrediente("Palta", "kg", 0.5),
-                Ingrediente("Tomate", "kg", 0.2),
+                Ingrediente("Palta", "unid", 1),
+                Ingrediente("Tomate", "unid", 1),
             ],
             precio=1800,
             icono_path="IMG/icono_hotdog_sin_texto_64x64.png",
@@ -22,13 +22,13 @@ def get_default_menus() -> List[IMenu]:
             [
                 Ingrediente("Pepsi", "unid", 1),
             ],
-            precio=1100,  # ← COMA AQUÍ
+            precio=1100, 
             icono_path="IMG/icono_cola_64x64.png",
         ),
         CrearMenu(
             "Papas fritas",
             [
-                Ingrediente("Papas", "kg", 5)
+                Ingrediente("Papas", "unid", 5)
             ],
             precio=1100,
             icono_path="IMG/icono_papas_fritas_64x64.png",
@@ -47,8 +47,8 @@ def get_default_menus() -> List[IMenu]:
             "Panqueques",
             [
                 Ingrediente("Panqueque", "unid", 2),
-                Ingrediente("Manjar", "kg", 1),
-                Ingrediente("Azucar", "kg", 1)
+                Ingrediente("Manjar", "unid", 1),
+                Ingrediente("Azucar", "unid", 1)
             ],
             precio=2000,
             icono_path="IMG/icono_panqueques_64x64.png"
@@ -67,8 +67,8 @@ def get_default_menus() -> List[IMenu]:
             "Ensalada Mixta",
             [
                 Ingrediente("Lechuga", "unid", 1),
-                Ingrediente("Tomate", "kg", 1),
-                Ingrediente("Zanahoria rallada", "kg", 1),
+                Ingrediente("Tomate", "unid", 1),
+                Ingrediente("Zanahoria rallada", "unid", 1),
             ],
             precio=1500,
             icono_path="IMG/icono_ensalada_mixta_64x64.png"
