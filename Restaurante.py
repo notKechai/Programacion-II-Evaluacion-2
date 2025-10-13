@@ -73,6 +73,32 @@ class AplicacionConPestanas(ctk.CTk):
         self._configurar_pestana_crear_menu()
         self._configurar_pestana_ver_boleta()
 
+    def generar_boleta(self):
+        if not self.pedido.menus:
+            CTkMessagebox(title="Sin items", message="El pedido está vacío.", icon="warning")
+            return
+
+        try:
+        # Genera el PDF de la boleta
+            facade = BoletaFacade(self.pedido)
+            facade.generar_boleta()
+
+        # Resetear el pedido para comenzar uno nuevo
+            self.pedido = Pedido()
+            self.actualizar_treeview_pedido()
+            self.label_total.configure(text="Total: $0.00")
+
+        # Aviso (no cambiar de pestaña ni mostrar PDF aquí)
+            CTkMessagebox(
+                title="Boleta Generada",
+                message="Boleta generada correctamente.\nVe a la pestaña 'Boleta' y pulsa 'Mostrar Boleta' para visualizarla.",
+                icon="info"
+            )
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f'No se pudo generar la boleta.\n{e}', icon="warning")
+
+
     def configurar_pestana3(self):
         label = ctk.CTkLabel(self.tab3, text="Carga de archivo CSV o Excel")
         label.pack(pady=20)
@@ -443,61 +469,53 @@ class AplicacionConPestanas(ctk.CTk):
     def eliminar_menu(self):
         sel = self.treeview_menu.selection()
         if not sel:
-            CTkMessagebox(title="Nada Seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
+            CTkMessagebox(title="Nada seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
             return
-        
-        item_id = sel[0]
-        valores = self.treeview_menu.item(item_id, "values")
-        if not valores:
-            return
-        
-        nombre = valores[0]
-        menu_completo = None
-        for menu in self.menus:  
-            if menu.nombre == nombre:
-                menu_completo = menu
-                break
 
-        eliminado = self.pedido.eliminar_menu(nombre, cantidad=1)
-        if not eliminado:
-            CTkMessagebox(title="No encontrado", message="No se pudo eliminar menús seleccionado.", icon="warning")
-            return
-        
-        for ret in menu_completo.ingredientes:
-            find = False
-            for urn in self.stock.lista_ingredientes:
-                if ret.nombre == urn.nombre :
-                    urn.cantidad = str(float(urn.cantidad) + float(ret.cantidad))
-                    find = True
-                    break
-                
-            if not find:
-                self.stock.agregar_ingrediente(ret)    
-        self.actualizar_treeview()
-        self.actualizar_treeview_pedido()
-        total = self.pedido.calcular_total()
-        self.label_total.configure(text=f'Total: ${total:,.0f}'.replace(",", "."))
-    
-    def generar_boleta(self):
-        if not self.pedido.menus:
-            CTkMessagebox(title="Sin items", message="El pedido está vacío.", icon="warning")
-            return
-        
         try:
-            facade = BoletaFacade(self.pedido)
-            facade.generar_boleta()
+            # 1) Identificar el menú seleccionado
+            item_id = sel[0]
+            valores = self.treeview_menu.item(item_id, "values")
+            if not valores:
+                return
 
-            self.pedido = Pedido()
-            self.actualizar_treeview_pedido()
-            self.label_total.configure(text="Total: $0.00")
-            
-            CTkMessagebox(title="Boleta Generada", message="Boleta generada correctamente.\nVe a la pestaña 'Boleta' y pulsa 'Mostrar Boleta' para visualizarla.",
-            icon="info")
+            nombre_menu_sel = valores[0]
 
-            for item in self.tree.get_children():
-                self.tree.delete(item)
+            # 2) Buscar el menú y su cantidad en el pedido
+            menu_en_pedido = None
+            for m in self.pedido.menus:
+                if m.nombre == nombre_menu_sel:
+                    menu_en_pedido = m
+                    break
+
+            if menu_en_pedido is None:
+                CTkMessagebox(title="No encontrado", message="No se encontró el menú seleccionado en el pedido.", icon="warning")
+                return
+
+            cantidad_menus = int(menu_en_pedido.cantidad) if menu_en_pedido.cantidad else 0
+            if cantidad_menus <= 0:
+                # nada que devolver, solo quitarlo de la lista si estuviera
+                self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
+            else:
+                # 3) Devolver al stock TODA la cantidad de este menú
+                for req in menu_en_pedido.ingredientes:
+                    total_devolver = float(req.cantidad) * cantidad_menus
+                    self.stock.agregar_ingrediente(Ingrediente(req.nombre, req.unidad, total_devolver))
+
+                # 4) Quitar completamente el menú del pedido
+                self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
+
+            # 5) Refrescar UI
+            self.actualizar_treeview()         # stock
+            self.actualizar_treeview_pedido()  # tabla del pedido
+            total = self.pedido.calcular_total()
+            self.label_total.configure(text=f"Total: ${total:,.0f}".replace(",", "."))
+
+            CTkMessagebox(title="Eliminado", message=f"Se eliminó '{nombre_menu_sel}' del pedido y se devolvió el stock.", icon="info")
+
         except Exception as e:
-            CTkMessagebox(title="Error", message=f'No se pudo generar la boleta.\n{e}', icon="warning")
+            CTkMessagebox(title="Error", message=f"No se pudo eliminar el menú.\n{e}", icon="warning")
+
 
     def configurar_pestana2(self):
         frame_superior = ctk.CTkFrame(self.tab2)
@@ -512,7 +530,7 @@ class AplicacionConPestanas(ctk.CTk):
 
         self.boton_eliminar_menu = ctk.CTkButton(frame_intermedio, text="Eliminar Menú", command=self.eliminar_menu)
         self.boton_eliminar_menu.pack(side="right", padx=10)
-
+        
         self.label_total = ctk.CTkLabel(frame_intermedio, text="Total: $0.00", anchor="e", font=("Helvetica", 12, "bold"))
         self.label_total.pack(side="right", padx=10)
 
