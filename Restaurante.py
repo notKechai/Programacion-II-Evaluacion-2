@@ -402,7 +402,7 @@ class AplicacionConPestanas(ctk.CTk):
     
     def generar_menus(self):
         try:
-            for widget in self.tab4.winfo_children():
+            for widget in tarjetas_frame.winfo_children():
                 widget.destroy()
 
             boton_menu = ctk.CTkButton(
