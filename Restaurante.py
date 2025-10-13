@@ -431,15 +431,6 @@ class AplicacionConPestanas(ctk.CTk):
             for widget in tarjetas_frame.winfo_children():
                 widget.destroy()
 
-            boton_menu = ctk.CTkButton(
-            self.tab4, text="Generar Carta (PDF)", command=self.generar_y_mostrar_carta_pdf
-            )
-            boton_menu.pack(pady=10)
-
-            self.pdf_viewer_carta = None
-            self.pdf_frame_carta = ctk.CTkFrame(self.tab4)
-            self.pdf_frame_carta.pack(expand=True, fill="both", padx=10, pady=10)
-
             self.menus_creados.clear()
 
             for menu in self.menus:
@@ -473,35 +464,6 @@ class AplicacionConPestanas(ctk.CTk):
             CTkMessagebox(title="Nada seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
             return
 
-        eliminado = self.pedido.eliminar_menu(nombre, cantidad=1)
-        if not eliminado:
-            CTkMessagebox(title="No encontrado", message="No se pudo eliminar menús seleccionado.", icon="warning")
-            return
-        
-        for ret in menu_completo.ingredientes:
-            find = False
-            for urn in self.stock.lista_ingredientes:
-                if ret.nombre == urn.nombre :
-                    nueva_cantidad = float(urn.cantidad) + float(ret.cantidad)
-                    if urn.unidad == 'unid':
-                        urn.cantidad = int(nueva_cantidad)
-                    else:
-                        urn.cantidad = nueva_cantidad
-                    find = True
-                    break
-                
-            if not find:
-                self.stock.agregar_ingrediente(ret)    
-        self.actualizar_treeview()
-        self.actualizar_treeview_pedido()
-        total = self.pedido.calcular_total()
-        self.label_total.configure(text=f'Total: ${total:,.0f}'.replace(",", "."))
-    
-    def generar_boleta(self):
-        if not self.pedido.menus:
-            CTkMessagebox(title="Sin items", message="El pedido está vacío.", icon="warning")
-            return
-        
         try:
             # 1) Identificar el menú seleccionado
             item_id = sel[0]
