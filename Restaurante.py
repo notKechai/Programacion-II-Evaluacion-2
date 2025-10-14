@@ -440,48 +440,65 @@ class AplicacionConPestanas(ctk.CTk):
         except Exception as e:
             CTkMessagebox(title="Error", message=f'Error al generar los menús.\n{e}', icon="warning")
 
-
     def eliminar_menu(self):
         sel = self.treeview_menu.selection()
         if not sel:
             CTkMessagebox(title="Nada Seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
             return
         
-        item_id = sel[0]
-        valores = self.treeview_menu.item(item_id, "values")
-        if not valores:
-            return
-        
-        nombre = valores[0]
-        menu_completo = None
-        for menu in self.menus:  
-            if menu.nombre == nombre:
-                menu_completo = menu
-                break
+        # Eliminar el primer bloque de lógica de eliminación/devolución
+        # que no está dentro del try/except, ya que el segundo bloque es más completo.
 
-        eliminado = self.pedido.eliminar_menu(nombre, cantidad=1)
-        if not eliminado:
-            CTkMessagebox(title="No encontrado", message="No se pudo eliminar menús seleccionado.", icon="warning")
-            return
-        
-        for ret in menu_completo.ingredientes:
-            find = False
-            for urn in self.stock.lista_ingredientes:
-                if ret.nombre == urn.nombre :
-                    nueva_cantidad = float(urn.cantidad) + float(ret.cantidad)
-                    if urn.unidad == 'unid':
-                        urn.cantidad = int(nueva_cantidad)
-                    else:
-                        urn.cantidad = nueva_cantidad
-                    find = True
+        try:
+        # 1) Identificar el menú seleccionado
+            item_id = sel[0]
+            valores = self.treeview_menu.item(item_id, "values")
+            if not valores:
+                # Si se selecciona la cabecera u otra cosa sin valores
+                CTkMessagebox(title="Nada Seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
+                return
+
+            nombre_menu_sel = valores[0]
+
+        # 2) Buscar el menú y su cantidad en el pedido
+            menu_en_pedido = None
+            for m in self.pedido.menus:
+                if m.nombre == nombre_menu_sel:
+                    menu_en_pedido = m
                     break
                 
-            if not find:
-                self.stock.agregar_ingrediente(ret)    
-        self.actualizar_treeview()
-        self.actualizar_treeview_pedido()
-        total = self.pedido.calcular_total()
-        self.label_total.configure(text=f'Total: ${total:,.0f}'.replace(",", "."))
+            if menu_en_pedido is None:
+                CTkMessagebox(title="No encontrado", message="No se encontró el menú seleccionado en el pedido.", icon="warning")
+                return
+
+            cantidad_menus = int(menu_en_pedido.cantidad) if menu_en_pedido.cantidad else 0
+            if cantidad_menus <= 0:
+            # Quitarlo de la lista si estuviera (aunque la cantidad sea 0 o menos)
+                self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
+            else:
+            # 3) Devolver al stock TODA la cantidad de este menú
+                for req in menu_en_pedido.ingredientes:
+                    total_devolver = float(req.cantidad) * cantidad_menus
+                    # Asumiendo que 'Ingrediente' es una clase válida
+                    self.stock.agregar_ingrediente(Ingrediente(req.nombre, req.unidad, total_devolver))
+
+            # 4) Quitar completamente el menú del pedido
+            # Esto se hace tanto en el if como en el else si es la intención
+            self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
+            
+            # Borrar la fila seleccionada de la treeview
+            self.treeview_menu.delete(item_id)
+
+        # 5) Refrescar UI
+            self.actualizar_treeview()         # stock
+            self.actualizar_treeview_pedido()  # tabla del pedido
+            total = self.pedido.calcular_total()
+            self.label_total.configure(text=f"Total: ${total:,.0f}".replace(",", "."))
+
+            CTkMessagebox(title="Eliminado", message=f"Se eliminó '{nombre_menu_sel}' del pedido y se devolvió el stock.", icon="info")
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"No se pudo eliminar el menú.\n{e}", icon="warning")
     
     def generar_boleta(self):
         if not self.pedido.menus:
