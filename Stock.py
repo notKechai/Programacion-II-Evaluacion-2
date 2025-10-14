@@ -3,34 +3,50 @@ from CTkMessagebox import CTkMessagebox
 
 class Stock:
     def __init__(self):
-        self.lista_ingredientes = []
+        # Almacenamiento real encapsulado
+        self._lista_ingredientes = []
 
-    def agregar_ingrediente(self, ingrediente):
-        for ing in self.lista_ingredientes:
-            if ing.nombre.capitalize() == ingrediente.nombre.strip().capitalize() and ing.unidad == ingrediente.unidad:
-                ing.cantidad = float(ing.cantidad) + float(ingrediente.cantidad) 
+    # Getter público (solo lectura) para mantener compatibilidad:
+    # podrás seguir haciendo: for i in self.stock.lista_ingredientes
+    @property
+    def lista_ingredientes(self):
+        return self._lista_ingredientes
+
+    def agregar_ingrediente(self, ingrediente: Ingrediente):
+        nombre_nuevo = ingrediente.nombre.strip().capitalize()
+        unidad_nueva = ingrediente.unidad
+
+        for ing in self._lista_ingredientes:
+            if ing.nombre.capitalize() == nombre_nuevo and ing.unidad == unidad_nueva:
+                ing.cantidad = float(ing.cantidad) + float(ingrediente.cantidad)
                 return
-            elif ing.nombre.capitalize() == ingrediente.nombre.strip().capitalize() and ing.unidad != ingrediente.unidad:
-                CTkMessagebox(title="Error de unidad", message=f"La unidad de {ing.nombre.capitalize()} es {ing.unidad.capitalize()}, no {ingrediente.unidad.strip().capitalize()}", icon="warning")
+            elif ing.nombre.capitalize() == nombre_nuevo and ing.unidad != unidad_nueva:
+                CTkMessagebox(
+                    title="Error de unidad",
+                    message=f"La unidad de {ing.nombre.capitalize()} es {ing.unidad.capitalize()}, no {unidad_nueva.strip().capitalize()}",
+                    icon="warning"
+                )
                 return
-        ingrediente.nombre = ingrediente.nombre.strip().capitalize()
-        self.lista_ingredientes.append(ingrediente)
+
+        ingrediente.nombre = nombre_nuevo
+        self._lista_ingredientes.append(ingrediente)
 
     def eliminar_ingrediente(self, nombre_ingrediente: str):
-        self.lista_ingredientes = [i for i in self.lista_ingredientes if i.nombre.lower() != nombre_ingrediente.lower()]
+        self._lista_ingredientes = [
+            i for i in self._lista_ingredientes
+            if i.nombre.lower() != nombre_ingrediente.lower()
+        ]
 
     def verificar_stock(self):
-        return {f'{i.nombre} ({i.unidad})': float(i.cantidad) for i in self.lista_ingredientes}
+        return {f'{i.nombre} ({i.unidad})': float(i.cantidad) for i in self._lista_ingredientes}
 
-    def actualizar_stock(self, nombre_ingrediente, nueva_cantidad):
-        for i in self.lista_ingredientes:
+    def actualizar_stock(self, nombre_ingrediente: str, nueva_cantidad):
+        for i in self._lista_ingredientes:
             if i.nombre == nombre_ingrediente:
                 i.cantidad = float(nueva_cantidad)
                 return True
         return False
 
     def obtener_elementos_menu(self):
-        return self.lista_ingredientes[:]
-
-
-
+        # Devolvemos una copia superficial para evitar mutaciones externas accidentales
+        return self._lista_ingredientes[:]

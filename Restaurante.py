@@ -74,6 +74,32 @@ class AplicacionConPestanas(ctk.CTk):
         self._configurar_pestana_crear_menu()   
         self._configurar_pestana_ver_boleta()
 
+    def generar_boleta(self):
+        if not self.pedido.menus:
+            CTkMessagebox(title="Sin items", message="El pedido está vacío.", icon="warning")
+            return
+
+        try:
+        # Genera el PDF de la boleta
+            facade = BoletaFacade(self.pedido)
+            facade.generar_boleta()
+
+        # Resetear el pedido para comenzar uno nuevo
+            self.pedido = Pedido()
+            self.actualizar_treeview_pedido()
+            self.label_total.configure(text="Total: $0.00")
+
+        # Aviso (no cambiar de pestaña ni mostrar PDF aquí)
+            CTkMessagebox(
+                title="Boleta Generada",
+                message="Boleta generada correctamente.\nVe a la pestaña 'Boleta' y pulsa 'Mostrar Boleta' para visualizarla.",
+                icon="info"
+            )
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f'No se pudo generar la boleta.\n{e}', icon="warning")
+
+
     def configurar_pestana3(self):
         label = ctk.CTkLabel(self.tab3, text="Carga de archivo CSV o Excel")
         label.pack(pady=20)
@@ -431,56 +457,47 @@ class AplicacionConPestanas(ctk.CTk):
         except Exception as e:
             CTkMessagebox(title="Error", message=f'Error al generar los menús.\n{e}', icon="warning")
 
+
     def eliminar_menu(self):
         sel = self.treeview_menu.selection()
         if not sel:
-            CTkMessagebox(title="Nada Seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
+            CTkMessagebox(title="Nada seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
             return
-        
-        # Eliminar el primer bloque de lógica de eliminación/devolución
-        # que no está dentro del try/except, ya que el segundo bloque es más completo.
 
         try:
-        # 1) Identificar el menú seleccionado
+            # 1) Identificar el menú seleccionado
             item_id = sel[0]
             valores = self.treeview_menu.item(item_id, "values")
             if not valores:
-                # Si se selecciona la cabecera u otra cosa sin valores
-                CTkMessagebox(title="Nada Seleccionado", message="Debes seleccionar un menú para eliminar.", icon="warning")
                 return
 
             nombre_menu_sel = valores[0]
 
-        # 2) Buscar el menú y su cantidad en el pedido
+            # 2) Buscar el menú y su cantidad en el pedido
             menu_en_pedido = None
             for m in self.pedido.menus:
                 if m.nombre == nombre_menu_sel:
                     menu_en_pedido = m
                     break
-                
+
             if menu_en_pedido is None:
                 CTkMessagebox(title="No encontrado", message="No se encontró el menú seleccionado en el pedido.", icon="warning")
                 return
 
             cantidad_menus = int(menu_en_pedido.cantidad) if menu_en_pedido.cantidad else 0
             if cantidad_menus <= 0:
-            # Quitarlo de la lista si estuviera (aunque la cantidad sea 0 o menos)
+                # nada que devolver, solo quitarlo de la lista si estuviera
                 self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
             else:
-            # 3) Devolver al stock TODA la cantidad de este menú
+                # 3) Devolver al stock TODA la cantidad de este menú
                 for req in menu_en_pedido.ingredientes:
                     total_devolver = float(req.cantidad) * cantidad_menus
-                    # Asumiendo que 'Ingrediente' es una clase válida
                     self.stock.agregar_ingrediente(Ingrediente(req.nombre, req.unidad, total_devolver))
 
-            # 4) Quitar completamente el menú del pedido
-            # Esto se hace tanto en el if como en el else si es la intención
-            self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
-            
-            # Borrar la fila seleccionada de la treeview
-            self.treeview_menu.delete(item_id)
+                # 4) Quitar completamente el menú del pedido
+                self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
 
-        # 5) Refrescar UI
+            # 5) Refrescar UI
             self.actualizar_treeview()         # stock
             self.actualizar_treeview_pedido()  # tabla del pedido
             total = self.pedido.calcular_total()
@@ -490,27 +507,7 @@ class AplicacionConPestanas(ctk.CTk):
 
         except Exception as e:
             CTkMessagebox(title="Error", message=f"No se pudo eliminar el menú.\n{e}", icon="warning")
-    
-    def generar_boleta(self):
-        if not self.pedido.menus:
-            CTkMessagebox(title="Sin items", message="El pedido está vacío.", icon="warning")
-            return
-        
-        try:
-            facade = BoletaFacade(self.pedido)
-            facade.generar_boleta()
 
-            self.pedido = Pedido()
-            self.actualizar_treeview_pedido()
-            self.label_total.configure(text="Total: $0.00")
-            
-            CTkMessagebox(title="Boleta Generada", message="Boleta generada correctamente.\nVe a la pestaña 'Boleta' y pulsa 'Mostrar Boleta' para visualizarla.",
-            icon="info")
-
-            for item in self.tree.get_children():
-                self.tree.delete(item)
-        except Exception as e:
-            CTkMessagebox(title="Error", message=f'No se pudo generar la boleta.\n{e}', icon="warning")
 
     def configurar_pestana2(self):
         frame_superior = ctk.CTkFrame(self.tab2)
@@ -525,7 +522,7 @@ class AplicacionConPestanas(ctk.CTk):
 
         self.boton_eliminar_menu = ctk.CTkButton(frame_intermedio, text="Eliminar Menú", command=self.eliminar_menu)
         self.boton_eliminar_menu.pack(side="right", padx=10)
-
+        
         self.label_total = ctk.CTkLabel(frame_intermedio, text="Total: $0.00", anchor="e", font=("Helvetica", 12, "bold"))
         self.label_total.pack(side="right", padx=10)
 

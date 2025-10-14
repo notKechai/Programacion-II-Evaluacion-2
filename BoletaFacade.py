@@ -3,21 +3,41 @@ from datetime import datetime
 
 class BoletaFacade:
     def __init__(self, pedido):
-        self.pedido = pedido
-        self.detalle = ""
-        self.subtotal = 0
-        self.iva = 0
-        self.total = 0
+        self._pedido = pedido
+        self._detalle = ""
+        self._subtotal = 0
+        self._iva = 0
+        self._total = 0
+
+    @property
+    def pedido(self):
+        return self._pedido
+    
+    @property
+    def detalle(self):
+        return self._detalle
+    
+    @property
+    def subtotal(self):
+        return self._subtotal
+    
+    @property
+    def iva(self):
+        return self._iva
+    
+    @property
+    def total(self):
+        return self._total
 
     def generar_detalle_boleta(self):
-        self.detalle = ""
-        for item in self.pedido.menus:
+        self._detalle = ""
+        for item in self._pedido.menus:
             subtotal = item.precio * item.cantidad
-            self.detalle += f"{item.nombre:<30} {item.cantidad:<10} ${item.precio:<10.2f} ${subtotal:<10.2f}\n"
+            self._detalle += f"{item.nombre:<30} {item.cantidad:<10} ${item.precio:<10.2f} ${subtotal:<10.2f}\n"
         
-        self.subtotal = self.pedido.calcular_total()
-        self.iva = self.subtotal * 0.19
-        self.total = self.subtotal + self.iva
+        self._subtotal = self._pedido.calcular_total()
+        self._iva = self._subtotal * 0.19
+        self._total = self._subtotal + self._iva
 
     def crear_pdf(self):
         pdf = FPDF()
