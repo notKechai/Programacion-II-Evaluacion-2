@@ -405,15 +405,6 @@ class AplicacionConPestanas(ctk.CTk):
             for widget in tarjetas_frame.winfo_children():
                 widget.destroy()
 
-            boton_menu = ctk.CTkButton(
-            self.tab4, text="Generar Carta (PDF)", command=self.generar_y_mostrar_carta_pdf
-            )
-            boton_menu.pack(pady=10)
-
-            self.pdf_viewer_carta = None
-            self.pdf_frame_carta = ctk.CTkFrame(self.tab4)
-            self.pdf_frame_carta.pack(expand=True, fill="both", padx=10, pady=10)
-
             self.menus_creados.clear()
 
             for menu in self.menus:
