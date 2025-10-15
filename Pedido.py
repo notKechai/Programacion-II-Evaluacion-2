@@ -1,17 +1,40 @@
-from ElementoMenu import CrearMenu 
+from typing import List
+from ElementoMenu import CrearMenu
+
 class Pedido:
     def __init__(self):
-        self.menus = []  
+        self._menus: List[CrearMenu] = [] 
 
-    def agregar_menu(self, menu: CrearMenu):
-        if menu not in self.menus:
-            self.menus.append(menu)
+    @property
+    def menus(self):
+        return self._menus
+    
+    def agregar_menu(self, menu: CrearMenu, cantidad: int = 1):
+        for m in self._menus:
+            if m.nombre == menu.nombre:
+                m.cantidad += cantidad
+                return
+        nuevo = CrearMenu(
+            nombre=menu.nombre,
+            ingredientes=menu.ingredientes,
+            precio=menu.precio,
+            icono_path=menu.icono_path,
+            cantidad=cantidad
+        )
+        self._menus.append(nuevo)
 
-    def eliminar_menu(self, nombre_menu: str):
-        pass
+    def eliminar_menu(self, nombre_menu: str, cantidad: int = 1) -> bool:
+        for m in list(self._menus):
+            if m.nombre == nombre_menu:
+                m.cantidad -= cantidad
+                if m.cantidad <= 0:
+                    self._menus.remove(m)
+                return True
+        return False
+    
 
     def mostrar_pedido(self):
-        pass
+        return [(m.nombre, m.cantidad, m.precio, m.cantidad * m.precio) for m in self._menus]
 
     def calcular_total(self) -> float:
-        pass
+        return sum(m.precio * m.cantidad for m in self._menus)
