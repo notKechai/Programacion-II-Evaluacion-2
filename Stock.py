@@ -3,11 +3,8 @@ from CTkMessagebox import CTkMessagebox
 
 class Stock:
     def __init__(self):
-        # Almacenamiento real encapsulado
         self._lista_ingredientes = []
 
-    # Getter público (solo lectura) para mantener compatibilidad:
-    # podrás seguir haciendo: for i in self.stock.lista_ingredientes
     @property
     def lista_ingredientes(self):
         return self._lista_ingredientes
@@ -19,17 +16,13 @@ class Stock:
         for ing in self._lista_ingredientes:
             if ing.nombre.capitalize() == nombre_nuevo and ing.unidad == unidad_nueva:
                 ing.cantidad = float(ing.cantidad) + float(ingrediente.cantidad)
-                return
+                return "actualizado"
             elif ing.nombre.capitalize() == nombre_nuevo and ing.unidad != unidad_nueva:
-                CTkMessagebox(
-                    title="Error de unidad",
-                    message=f"La unidad de {ing.nombre.capitalize()} es {ing.unidad.capitalize()}, no {unidad_nueva.strip().capitalize()}",
-                    icon="warning"
-                )
-                return
+                return "error"
 
         ingrediente.nombre = nombre_nuevo
         self._lista_ingredientes.append(ingrediente)
+        return "nuevo"
 
     def eliminar_ingrediente(self, nombre_ingrediente: str):
         self._lista_ingredientes = [
@@ -48,5 +41,4 @@ class Stock:
         return False
 
     def obtener_elementos_menu(self):
-        # Devolvemos una copia superficial para evitar mutaciones externas accidentales
         return self._lista_ingredientes[:]

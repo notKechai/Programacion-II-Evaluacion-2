@@ -1,4 +1,3 @@
-# IMenu.py
 from typing import Protocol, List, Optional
 from Ingrediente import Ingrediente
 from Stock import Stock

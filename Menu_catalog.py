@@ -38,7 +38,7 @@ def get_default_menus() -> List[IMenu]:
             [
                 Ingrediente("Pan de hamburguesa", "unid", 1),
                 Ingrediente("Lamina de queso", "unid", 1),
-                Ingrediente("Hamburgesa de carne", "unid", 1)
+                Ingrediente("Hamburguesa de carne", "unid", 1)
             ],
             precio=3500,
             icono_path="IMG/icono_hamburguesa_negra_64x64.png",

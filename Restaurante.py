@@ -37,12 +37,12 @@ class AplicacionConPestanas(ctk.CTk):
         self.crear_pestanas()
 
     def actualizar_treeview(self):
-
+        if not hasattr(self, "tree"):
+            return
         for item in self.tree.get_children():
             self.tree.delete(item)
-
         for ingrediente in self.stock.lista_ingredientes:
-            self.tree.insert("", "end", values=(ingrediente.nombre,ingrediente.unidad, ingrediente.cantidad))    
+            self.tree.insert("", "end", values=(ingrediente.nombre, ingrediente.unidad, ingrediente.cantidad))
 
     def on_tab_change(self):
         selected_tab = self.tabview.get()
@@ -53,6 +53,7 @@ class AplicacionConPestanas(ctk.CTk):
             print("Stock")
         if selected_tab == "Pedido":
             self.actualizar_treeview()
+            self.actualizar_treeview_pedido()
             self.generar_menus()
             print('Pedido')
         if selected_tab == "Carta restaurante":
@@ -438,8 +439,8 @@ class AplicacionConPestanas(ctk.CTk):
                     if not any(m.nombre == menu.nombre for m in self.menus_creados):
                         self.menus_creados.append(menu)
                         self.crear_tarjeta(menu)
-            else:
-                print(f"No hay stock suficiente para '{menu.nombre}'")
+                else:
+                    print(f"No hay stock suficiente para '{menu.nombre}'")
 
             if not self.menus_creados:
                 CTkMessagebox(
@@ -577,6 +578,7 @@ class AplicacionConPestanas(ctk.CTk):
             font=("Helvetica", 12, "bold"),
             bg_color="transparent",
         )
+        
         texto_label.pack(anchor="center", pady=1)
         texto_label.bind("<Button-1>", lambda event: self.tarjeta_click(event, menu))
 
@@ -624,15 +626,25 @@ class AplicacionConPestanas(ctk.CTk):
             cantidad = int(cantidad)
 
         nuevo_ingrediente = Ingrediente(nombre,unidad,cantidad)
-        self.stock.agregar_ingrediente(nuevo_ingrediente)
+        estado = self.stock.agregar_ingrediente(nuevo_ingrediente)
         self.actualizar_treeview()
-        CTkMessagebox(title="Éxito!", message="El ingrediente se a añadido correctamente.", icon="check")
+
+        if estado == "error":
+            CTkMessagebox(
+                    title="Error de unidad",
+                    message=f"La unidad de {nombre.capitalize()} no es {unidad.strip()}",
+                    icon="warning"
+                )
+        elif estado == "nuevo":
+            CTkMessagebox(title="Éxito!", message=f"El ingrediente {nombre.capitalize()} se ha añadido correctamente.", icon="check")
+        elif estado == "actualizado":
+            CTkMessagebox(title="Éxito!", message=f"El ingrediente {nombre.capitalize()} se ha actualizado correctamente.", icon="check")
         
 
     def eliminar_ingrediente(self):
         seleccion = self.tree.selection()
         if not seleccion:
-                CTkMessagebox(title="Error", message="Selecciona un ingrediente para eliminar.", icon="warfning")
+                CTkMessagebox(title="Error", message="Selecciona un ingrediente para eliminar.", icon="warning")
                 return
         item_id = seleccion[0]
         nombre_ingrediente = self.tree.item(item_id, "values")[0]
@@ -641,17 +653,6 @@ class AplicacionConPestanas(ctk.CTk):
         self.actualizar_treeview()
 
         CTkMessagebox(title="Ingrediente eliminado", message=f"'{nombre_ingrediente}' fue eliminado del stock.", icon="info")
-
-        
-
-    def actualizar_treeview(self):
-        if not hasattr(self, "tree"):
-            return
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        for ingrediente in self.stock.lista_ingredientes:
-            self.tree.insert("", "end", values=(ingrediente.nombre, ingrediente.unidad, ingrediente.cantidad))
-
 
 if __name__ == "__main__":
     import customtkinter as ctk
