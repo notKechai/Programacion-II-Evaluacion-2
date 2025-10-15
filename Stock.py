@@ -11,7 +11,7 @@ class Stock:
 
     def agregar_ingrediente(self, ingrediente: Ingrediente):
         nombre_nuevo = ingrediente.nombre.strip().capitalize()
-        unidad_nueva = ingrediente.unidad
+        unidad_nueva = ingrediente.unidad.strip()
 
         for ing in self._lista_ingredientes:
             if ing.nombre.capitalize() == nombre_nuevo and ing.unidad == unidad_nueva:

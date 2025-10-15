@@ -1,4 +1,3 @@
-# menu_catalog.py
 from typing import List
 from ElementoMenu import CrearMenu
 from Ingrediente import Ingrediente

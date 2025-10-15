@@ -8,7 +8,10 @@ class Pedido:
     @property
     def menus(self):
         return self._menus
-    
+    @menus.setter
+    def menus(self,menus: List[CrearMenu]):
+        self._menus = menus
+
     def agregar_menu(self, menu: CrearMenu, cantidad: int = 1):
         for m in self._menus:
             if m.nombre == menu.nombre:

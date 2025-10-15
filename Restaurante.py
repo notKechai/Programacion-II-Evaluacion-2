@@ -81,16 +81,13 @@ class AplicacionConPestanas(ctk.CTk):
             return
 
         try:
-        # Genera el PDF de la boleta
             facade = BoletaFacade(self.pedido)
             facade.generar_boleta()
 
-        # Resetear el pedido para comenzar uno nuevo
             self.pedido = Pedido()
             self.actualizar_treeview_pedido()
             self.label_total.configure(text="Total: $0.00")
 
-        # Aviso (no cambiar de pestaña ni mostrar PDF aquí)
             CTkMessagebox(
                 title="Boleta Generada",
                 message="Boleta generada correctamente.\nVe a la pestaña 'Boleta' y pulsa 'Mostrar Boleta' para visualizarla.",
@@ -122,10 +119,8 @@ class AplicacionConPestanas(ctk.CTk):
             return
         
         try:
-        # Asegurar normalización de columnas sin helpers
             df = self.df_csv.rename(columns={c: c.strip().lower() for c in self.df_csv.columns})
 
-        # Validar columnas requeridas
             if not all(c in df.columns for c in ("nombre", "unidad", "cantidad")):
                 CTkMessagebox(title="Error", message="El archivo debe tener columnas 'nombre', 'unidad' y 'cantidad'.", icon="warning")
                 return
@@ -135,14 +130,13 @@ class AplicacionConPestanas(ctk.CTk):
                 unidad = str(row['unidad']).strip()
                 cantidad = row['cantidad']
 
-            # Validar unidad
                 if unidad not in ("kg", "unid"):
                     CTkMessagebox(title="Unidad inválida",
                                 message=f"Unidad no soportada para '{nombre}': {unidad}",
                                 icon="warning")
                     continue
 
-            # Convertir cantidad a número
+
                 try:
                     cantidad = float(cantidad)
                 except:
@@ -151,8 +145,6 @@ class AplicacionConPestanas(ctk.CTk):
                                 icon="warning")
                     continue
 
-                if unidad == "unid":
-                    cantidad = int(cantidad)
 
                 ingrediente = Ingrediente(nombre=nombre, unidad=unidad, cantidad=cantidad)
                 self.stock.agregar_ingrediente(ingrediente)
@@ -176,7 +168,7 @@ class AplicacionConPestanas(ctk.CTk):
         )
 
         if not ruta:
-            return #el usuario canceló la selección
+            return 
         
         try:
             ext = os.path.splitext(ruta)[1].lower()
@@ -271,7 +263,7 @@ class AplicacionConPestanas(ctk.CTk):
             )
             
         
-            #Limpiando el visor previo
+
 
             if self.pdf_viewer_carta is not None:
                 try:
@@ -281,7 +273,7 @@ class AplicacionConPestanas(ctk.CTk):
                     pass
                 self.pdf_viewer_carta = None
             
-            #Monatando el visor
+
 
             if not os.path.exists(abs_pdf):
                 CTkMessagebox(title="Error", message="No se encontró el PDF generado.", icon="warning")
@@ -309,7 +301,7 @@ class AplicacionConPestanas(ctk.CTk):
     
         self.pdf_viewer_boleta = None
         
-    # SE LE IMPLEMENTA BOLETAFACDE
+
     def mostrar_boleta(self):
         try:
             pdf_path = os.path.abspath("boleta.pdf")
@@ -333,14 +325,6 @@ class AplicacionConPestanas(ctk.CTk):
         except Exception as e:
             CTkMessagebox(title="Error", message=f"No se pudo mostrar la boleta.\n{e}", icon="warning")
 
-            if self.pdf_viewer_boleta is not None:
-                try:
-                    self.pdf_viewer_boleta.pack_forget()
-                    self.pdf_viewer_boleta.destroy()
-                except Exception:
-                    pass
-                self.pdf_viewer_boleta = None
-
             abs_pdf = os.path.abspath(pdf_path)
             self.pdf_viewer_boleta = CTkPDFViewer(self.pdf_frame_boleta, file=abs_pdf)
             self.pdf_viewer_boleta.pack(expand=True, fill="both")
@@ -350,14 +334,14 @@ class AplicacionConPestanas(ctk.CTk):
 
             
     def configurar_pestana1(self):
-        # Dividir la Pestaña 1 en dos frames
+
         frame_formulario = ctk.CTkFrame(self.tab1)
         frame_formulario.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
         frame_treeview = ctk.CTkFrame(self.tab1)
         frame_treeview.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-        # Formulario en el primer frame
+
         label_nombre = ctk.CTkLabel(frame_formulario, text="Nombre del Ingrediente:")
         label_nombre.pack(pady=5)
         self.entry_nombre = ctk.CTkEntry(frame_formulario)
@@ -466,7 +450,6 @@ class AplicacionConPestanas(ctk.CTk):
             return
 
         try:
-            # 1) Identificar el menú seleccionado
             item_id = sel[0]
             valores = self.treeview_menu.item(item_id, "values")
             if not valores:
@@ -474,7 +457,6 @@ class AplicacionConPestanas(ctk.CTk):
 
             nombre_menu_sel = valores[0]
 
-            # 2) Buscar el menú y su cantidad en el pedido
             menu_en_pedido = None
             for m in self.pedido.menus:
                 if m.nombre == nombre_menu_sel:
@@ -487,20 +469,17 @@ class AplicacionConPestanas(ctk.CTk):
 
             cantidad_menus = int(menu_en_pedido.cantidad) if menu_en_pedido.cantidad else 0
             if cantidad_menus <= 0:
-                # nada que devolver, solo quitarlo de la lista si estuviera
+
                 self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
             else:
-                # 3) Devolver al stock TODA la cantidad de este menú
                 for req in menu_en_pedido.ingredientes:
                     total_devolver = float(req.cantidad) * cantidad_menus
                     self.stock.agregar_ingrediente(Ingrediente(req.nombre, req.unidad, total_devolver))
-
-                # 4) Quitar completamente el menú del pedido
                 self.pedido.menus = [x for x in self.pedido.menus if x.nombre != nombre_menu_sel]
 
-            # 5) Refrescar UI
-            self.actualizar_treeview()         # stock
-            self.actualizar_treeview_pedido()  # tabla del pedido
+
+            self.actualizar_treeview()   
+            self.actualizar_treeview_pedido()  
             total = self.pedido.calcular_total()
             self.label_total.configure(text=f"Total: ${total:,.0f}".replace(",", "."))
 
@@ -591,13 +570,16 @@ class AplicacionConPestanas(ctk.CTk):
 
     def validar_cantidad(self, cantidad, unidad):
         try:
+            cantidad_num = float(cantidad)
             if unidad == "unid":
-                cantidad_num = int(cantidad)
+                if not cantidad_num.is_integer():
+                    CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número entero.",icon="warning")
+                    return False
+                cantidad_num = int(cantidad_num)
                 if cantidad_num <= 0:
                     CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
                     return False
             elif unidad == "kg":
-                cantidad_num = float(cantidad)
                 if cantidad_num <= 0:
                     CTkMessagebox(title="Error de Validación", message="La cantidad debe ser un número positivo.",icon="warning")
                     return False
@@ -623,7 +605,7 @@ class AplicacionConPestanas(ctk.CTk):
         if unidad == "kg":
             cantidad = float(cantidad)
         elif unidad == "unid":
-            cantidad = int(cantidad)
+            cantidad = int(float(cantidad))
 
         nuevo_ingrediente = Ingrediente(nombre,unidad,cantidad)
         estado = self.stock.agregar_ingrediente(nuevo_ingrediente)
